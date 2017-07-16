@@ -56,29 +56,33 @@ function getSlotTypeDefinitions(intentDefinitions, callback) {
 		});
 	});
 
-	// now let's get the slotTypes we need
-	slotTypes.forEach(function(slotType) {
+	if (slotTypes.length > 0) {
+		// now let's get the slotTypes we need
+		slotTypes.forEach(function(slotType) {
 
-		let params = {
-			name: slotType.slotType,
-			version: slotType.slotTypeVersion
-		};
-		lexModels.getSlotType(params, function(err, slotTypeDefinition) {
+			let params = {
+				name: slotType.slotType,
+				version: slotType.slotTypeVersion
+			};
+			lexModels.getSlotType(params, function(err, slotTypeDefinition) {
 
-			if (err) {
-				console.error(err);
-				callback(err, null);
+				if (err) {
+					console.error(err);
+					callback(err, null);
 
-			} else {
+				} else {
 
-				slotTypeDefinitions.push(slotTypeDefinition);
-				// callback if we have collected all the definitions we need
-				if (slotTypeDefinitions.length >= slotTypes.length) {
-					callback(null, slotTypeDefinitions);
+					slotTypeDefinitions.push(slotTypeDefinition);
+					// callback if we have collected all the definitions we need
+					if (slotTypeDefinitions.length >= slotTypes.length) {
+						callback(null, slotTypeDefinitions);
+					}
 				}
-			}
+			});
 		});
-	});
+	} else {
+		callback(null, []);
+	}
 }
 
 function getIntentDefinitions(intents, callback) {

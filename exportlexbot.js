@@ -153,7 +153,7 @@ function getBotDefinition(myBotName, myBotVersion, callback) {
 	});
 }
 
-if (process.argv.length != 4) {
+if (process.argv.length < 3 || process.argv.length > 4) {
 
 	console.log(`Usage:  ${__filename} <BotName> <BotVersion>`);
 	console.log(`    for example:  ${__filename}  PressoBot "\\$LATEST"`)
@@ -161,7 +161,7 @@ if (process.argv.length != 4) {
 }
 
 let myBotName = process.argv[2];
-let myBotVersion = process.argv[3];
+let myBotVersion = process.argv[3] || '$LATEST';
 
 getBotDefinition(myBotName, myBotVersion, function(err, botDefinition) {
 

@@ -165,5 +165,8 @@ let myBotVersion = process.argv[3] || '$LATEST';
 
 getBotDefinition(myBotName, myBotVersion, function(err, botDefinition) {
 
-	console.log(JSON.stringify(botDefinition));
+	if ( err )
+		console.log( err )
+	else
+		console.log(JSON.stringify(botDefinition));
 });

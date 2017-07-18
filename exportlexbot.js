@@ -45,7 +45,7 @@ function getSlotTypeDefinitions(intentDefinitions, callback) {
 
 		intentDefinition.slots.forEach(function(slot) {
 
-			if (slot.slotTypeVersion) {
+			if (slot.slotTypeVersion && slotTypes.findIndex( obj => obj.slotType == slot.slotType ) == -1) {
 
 				// we only want custom slot types
 				slotTypes.push({

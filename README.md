@@ -13,6 +13,8 @@ $ npm install aws-sdk  # if you don't have it installed globally
 ## To use
 ```bash
 $ node exportlexbot.js <BotName> <BotVersion>
-# e.g., node exportlexbot.js PressoBot "\$LATEST"
-# e.g., node exportlexbot.js PressoBot "\$LATEST" | jq '.'
+# examples:
+# node exportlexbot.js PressoBot "\$LATEST"
+# node exportlexbot.js PressoBot "\$LATEST" | jq '.'
+# node exportlexbot.js PressoBot "\$LATEST" | jq '.' > bot.json 
 ```

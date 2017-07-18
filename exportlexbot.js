@@ -32,6 +32,8 @@
 'use strict';
 
 let AWS = require('aws-sdk');
+let fs = require('fs');
+let stringify = require('json-stable-stringify');
 
 AWS.config.region = 'us-east-1'; // Region
 let lexModels = new AWS.LexModelBuildingService();
@@ -72,6 +74,9 @@ function getSlotTypeDefinitions(intentDefinitions, callback) {
 
 				} else {
 
+					// sort enumerationValues for consistency
+					slotTypeDefinition.enumerationValues.sort( (a, b) => a.value.localeCompare( b.value ) );
+
 					slotTypeDefinitions.push(slotTypeDefinition);
 					// callback if we have collected all the definitions we need
 					if (slotTypeDefinitions.length >= slotTypes.length) {
@@ -101,11 +106,15 @@ function getIntentDefinitions(intents, callback) {
 
 			} else {
 
+				// Sort a few values for consistency before saving it
+				intentDefinition.sampleUtterances.sort( (a, b) => a.localeCompare( b ) );
+
 				// console.log(`adding intent ${intentDefinition.name}`);
 				intentDefinitions.push(intentDefinition);
 				// callback if we have collected all the definitions we need
 				if (intentDefinitions.length >= intents.length) {
 
+					intentDefinitions.sort( (a, b) => a.name.localeCompare( b.name ) );
 					callback(null, intentDefinitions);
 				}
 			}
@@ -126,6 +135,11 @@ function getBotDefinition(myBotName, myBotVersion, callback) {
 			callback(err, null);
 
 		} else {
+
+			// Sort the abortStatement messages, clarifcationPrompt messages, and intent names for consistency
+			botDefinition.abortStatement.messages.sort( (a, b) => a.content.localeCompare( b.content ) );
+			botDefinition.clarificationPrompt.messages.sort( (a, b) => a.content.localeCompare( b.content ) );
+			botDefinition.intents.sort( (a, b) => a.intentName.localeCompare( b.intentName ) );
 
 			getIntentDefinitions(botDefinition.intents, function(err, intentDefinitions) {
 
@@ -168,5 +182,9 @@ getBotDefinition(myBotName, myBotVersion, function(err, botDefinition) {
 	if ( err )
 		console.log( err )
 	else
-		console.log(JSON.stringify(botDefinition));
+	{
+		// Output the bot definition to a file named after the bot name
+		// Output is formatted for easier readibility
+		fs.writeFile(myBotName + '.json', stringify(botDefinition, {'space': '  '}), function( err ) { if ( err ) console.log( "Error : " + err ); });
+	}
 });

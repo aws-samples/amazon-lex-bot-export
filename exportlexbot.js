@@ -75,7 +75,8 @@ function getSlotTypeDefinitions(intentDefinitions, callback) {
 				} else {
 
 					// sort enumerationValues for consistency
-					slotTypeDefinition.enumerationValues.sort( (a, b) => a.value.localeCompare( b.value ) );
+					if ( slotTypeDefinition !== undefined && slotTypeDefinition.enumerationValues !== undefined )
+						slotTypeDefinition.enumerationValues.sort( (a, b) => a.value.localeCompare( b.value ) );
 
 					slotTypeDefinitions.push(slotTypeDefinition);
 					// callback if we have collected all the definitions we need
@@ -107,7 +108,8 @@ function getIntentDefinitions(intents, callback) {
 			} else {
 
 				// Sort a few values for consistency before saving it
-				intentDefinition.sampleUtterances.sort( (a, b) => a.localeCompare( b ) );
+				if ( intentDefinition !== undefined && intentDefinition.sampleUtterances !== undefined )
+					intentDefinition.sampleUtterances.sort( (a, b) => a.localeCompare( b ) );
 
 				// console.log(`adding intent ${intentDefinition.name}`);
 				intentDefinitions.push(intentDefinition);
@@ -134,35 +136,43 @@ function getBotDefinition(myBotName, myBotVersion, callback) {
 		if (err) {
 			callback(err, null);
 
-		} else {
+		} else if ( botDefinition !== undefined ) {
 
 			// Sort the abortStatement messages, clarifcationPrompt messages, and intent names for consistency
-			botDefinition.abortStatement.messages.sort( (a, b) => a.content.localeCompare( b.content ) );
-			botDefinition.clarificationPrompt.messages.sort( (a, b) => a.content.localeCompare( b.content ) );
-			botDefinition.intents.sort( (a, b) => a.intentName.localeCompare( b.intentName ) );
+			if ( botDefinition.abortStatement !== undefined )
+				botDefinition.abortStatement.messages.sort( (a, b) => a.content.localeCompare( b.content ) );
 
-			getIntentDefinitions(botDefinition.intents, function(err, intentDefinitions) {
+			if ( botDefinition.clarificationPrompt !== undefined )
+				botDefinition.clarificationPrompt.messages.sort( (a, b) => a.content.localeCompare( b.content ) );
 
-				if (err) {
-					console.log(err);
-					callback(err, null);
+			if ( botDefinition.intents !== undefined )
+				botDefinition.intents.sort( (a, b) => a.intentName.localeCompare( b.intentName ) );
 
-				} else {
-					botDefinition.dependencies = {};
-					botDefinition.dependencies.intents = intentDefinitions;
-					getSlotTypeDefinitions(botDefinition.dependencies.intents, function(err, slotTypeDefinitions) {
+			if ( botDefinition.intents !== undefined )
+				getIntentDefinitions(botDefinition.intents, function(err, intentDefinitions) {
 
-						if (err) {
-							console.log(err);
-							callback(err, null);
+					if (err) {
+						console.log(err);
+						callback(err, null);
 
-						} else {
-							botDefinition.dependencies.slotTypes = slotTypeDefinitions;
-							callback(null, botDefinition);
-						}
-					});
-				}
-			});
+					} else {
+						botDefinition.dependencies = {};
+						botDefinition.dependencies.intents = intentDefinitions;
+						getSlotTypeDefinitions(botDefinition.dependencies.intents, function(err, slotTypeDefinitions) {
+
+							if (err) {
+								console.log(err);
+								callback(err, null);
+
+							} else {
+								botDefinition.dependencies.slotTypes = slotTypeDefinitions;
+								callback(null, botDefinition);
+							}
+						});
+					}
+				});
+			else
+				callback(null, botDefinition);
 		}
 	});
 }
@@ -185,6 +195,6 @@ getBotDefinition(myBotName, myBotVersion, function(err, botDefinition) {
 	{
 		// Output the bot definition to a file named after the bot name
 		// Output is formatted for easier readibility
-		fs.writeFile(myBotName + '.json', stringify(botDefinition, {'space': '  '}), function( err ) { if ( err ) console.log( "Error : " + err ); });
+		console.log(stringify(botDefinition, {'space': '  '}));
 	}
 });

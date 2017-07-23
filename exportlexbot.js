@@ -32,6 +32,15 @@
 'use strict';
 
 let AWS = require('aws-sdk');
+let fs = require('fs');
+let stringify = require('json-stable-stringify');
+
+let programName = __filename.substring( __dirname.length + 1 );
+let argvs = require( 'minimist' )( process.argv.slice( 2 ), {
+		'alias' : { 'd' : 'dir', 'f' : 'file', 'help' : 'h', 'p' : 'pretty', 'v' : 'version' },
+		'boolean' : [ 'pretty' ],
+		'default' : { 'version' : '$LATEST' }
+	} );
 
 AWS.config.region = 'us-east-1'; // Region
 let lexModels = new AWS.LexModelBuildingService();
@@ -72,6 +81,10 @@ function getSlotTypeDefinitions(intentDefinitions, callback) {
 
 				} else {
 
+					// sort enumerationValues for consistency
+					if ( slotTypeDefinition !== undefined && slotTypeDefinition.enumerationValues !== undefined )
+						slotTypeDefinition.enumerationValues.sort( (a, b) => a.value.localeCompare( b.value ) );
+
 					slotTypeDefinitions.push(slotTypeDefinition);
 					// callback if we have collected all the definitions we need
 					if (slotTypeDefinitions.length >= slotTypes.length) {
@@ -101,11 +114,16 @@ function getIntentDefinitions(intents, callback) {
 
 			} else {
 
+				// Sort a few values for consistency before saving it
+				if ( intentDefinition !== undefined && intentDefinition.sampleUtterances !== undefined )
+					intentDefinition.sampleUtterances.sort( (a, b) => a.localeCompare( b ) );
+
 				// console.log(`adding intent ${intentDefinition.name}`);
 				intentDefinitions.push(intentDefinition);
 				// callback if we have collected all the definitions we need
 				if (intentDefinitions.length >= intents.length) {
 
+					intentDefinitions.sort( (a, b) => a.name.localeCompare( b.name ) );
 					callback(null, intentDefinitions);
 				}
 			}
@@ -125,48 +143,87 @@ function getBotDefinition(myBotName, myBotVersion, callback) {
 		if (err) {
 			callback(err, null);
 
-		} else {
+		} else if ( botDefinition !== undefined ) {
 
-			getIntentDefinitions(botDefinition.intents, function(err, intentDefinitions) {
+			// Sort the abortStatement messages, clarifcationPrompt messages, and intent names for consistency
+			if ( botDefinition.abortStatement !== undefined )
+				botDefinition.abortStatement.messages.sort( (a, b) => a.content.localeCompare( b.content ) );
 
-				if (err) {
-					console.log(err);
-					callback(err, null);
+			if ( botDefinition.clarificationPrompt !== undefined )
+				botDefinition.clarificationPrompt.messages.sort( (a, b) => a.content.localeCompare( b.content ) );
 
-				} else {
-					botDefinition.dependencies = {};
-					botDefinition.dependencies.intents = intentDefinitions;
-					getSlotTypeDefinitions(botDefinition.dependencies.intents, function(err, slotTypeDefinitions) {
+			if ( botDefinition.intents !== undefined )
+				botDefinition.intents.sort( (a, b) => a.intentName.localeCompare( b.intentName ) );
 
-						if (err) {
-							console.log(err);
-							callback(err, null);
+			if ( botDefinition.intents !== undefined )
+				getIntentDefinitions(botDefinition.intents, function(err, intentDefinitions) {
 
-						} else {
-							botDefinition.dependencies.slotTypes = slotTypeDefinitions;
-							callback(null, botDefinition);
-						}
-					});
-				}
-			});
+					if (err) {
+						console.log(err);
+						callback(err, null);
+
+					} else {
+						botDefinition.dependencies = {};
+						botDefinition.dependencies.intents = intentDefinitions;
+						getSlotTypeDefinitions(botDefinition.dependencies.intents, function(err, slotTypeDefinitions) {
+
+							if (err) {
+								console.log(err);
+								callback(err, null);
+
+							} else {
+								botDefinition.dependencies.slotTypes = slotTypeDefinitions;
+								callback(null, botDefinition);
+							}
+						});
+					}
+				});
+			else
+				callback(null, botDefinition);
 		}
 	});
 }
 
-if (process.argv.length < 3 || process.argv.length > 4) {
+function help() {
+  let help = `Usage:  ${programName} [ --dir [.] --file [BotName.json] --pretty --version <BotVersion> ] <BotName>\n\n`;
 
-	console.log(`Usage:  ${__filename} <BotName> <BotVersion>`);
-	console.log(`    for example:  ${__filename}  PressoBot "\\$LATEST"`)
+  help += "    -d, --dir      Output directory for file (implies --file w/default file name of <BotName>.json), default is current directory\n";
+  help += "    -f, --file     Output definition to file, if filename provided it overrides default of <BotName>.json\n";
+  help += "    -p, --pretty   Output definition in a readable format with sorted entries\n";
+  help += "    -v, --version  Output the version specified, or $LATEST by default\n\n";
+  help += `    for example: '${programName} -v PressoBot' will output the $LATEST version of PressoBot to PressoBot.json in the current directory\n\n`;
+
+  return help;
+}
+
+if ( argvs.help || argvs._.length == 0 ) {
+	console.log( help() );
 	process.exit(-1);
 }
 
-let myBotName = process.argv[2];
-let myBotVersion = process.argv[3] || '$LATEST';
+let myBotName = argvs._[0];
+let myBotVersion = argvs.version;
 
 getBotDefinition(myBotName, myBotVersion, function(err, botDefinition) {
 
 	if ( err )
 		console.log( err )
 	else
-		console.log(JSON.stringify(botDefinition));
+	{
+		let output = argvs[ 'pretty' ] ? stringify(botDefinition, {'space': '  '}) : JSON.stringify( botDefinition );
+
+		if ( argvs[ 'file' ] || argvs[ 'dir' ] )
+		{
+			let dir = ( argvs[ 'dir' ] === undefined || argvs[ 'dir' ] == true ) ? '.' : argvs[ 'dir' ];
+			let file = ( argvs[ 'file' ] === undefined || argvs[ 'file' ] == true ) ? ( myBotName + '.json' ) : argvs[ 'file' ];
+			let fullName = dir + '/' + file;
+
+			fs.writeFile(fullName, output, function( err ) { if ( err ) console.log( "Error : " + err ); });
+
+			console.log( "\nDefinition saved to " + fullName + "\n" );
+		}
+		else
+			console.log( output );
+	}
+
 });

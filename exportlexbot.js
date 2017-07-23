@@ -214,11 +214,13 @@ getBotDefinition(myBotName, myBotVersion, function(err, botDefinition) {
 
 		if ( argvs[ 'file' ] || argvs[ 'dir' ] )
 		{
-			let dir = argvs[ 'dir' ] || '.';
-			let file = argvs[ 'file' ] || ( myBotName + '.json' );
+			let dir = ( argvs[ 'dir' ] === undefined || argvs[ 'dir' ] == true ) ? '.' : argvs[ 'dir' ];
+			let file = ( argvs[ 'file' ] === undefined || argvs[ 'file' ] == true ) ? ( myBotName + '.json' ) : argvs[ 'file' ];
 			let fullName = dir + '/' + file;
 
 			fs.writeFile(fullName, output, function( err ) { if ( err ) console.log( "Error : " + err ); });
+
+			console.log( "\nDefinition saved to " + fullName + "\n" );
 		}
 		else
 			console.log( output );

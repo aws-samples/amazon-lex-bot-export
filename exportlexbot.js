@@ -196,7 +196,6 @@ function help() {
   return help;
 }
 
-console.dir( argvs );
 if ( argvs.help || argvs._.length == 0 ) {
 	console.log( help() );
 	process.exit(-1);

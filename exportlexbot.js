@@ -35,6 +35,13 @@ let AWS = require('aws-sdk');
 let fs = require('fs');
 let stringify = require('json-stable-stringify');
 
+let programName = __filename.substring( __dirname.length + 1 );
+let argvs = require( 'minimist' )( process.argv.slice( 2 ), {
+		'alias' : { 'd' : 'dir', 'f' : 'file', 'help' : 'h', 'p' : 'pretty', 'v' : 'version' },
+		'boolean' : [ 'pretty' ],
+		'default' : { 'version' : '$LATEST' }
+	} );
+
 AWS.config.region = 'us-east-1'; // Region
 let lexModels = new AWS.LexModelBuildingService();
 
@@ -177,15 +184,26 @@ function getBotDefinition(myBotName, myBotVersion, callback) {
 	});
 }
 
-if (process.argv.length < 3 || process.argv.length > 4) {
+function help() {
+  let help = `Usage:  ${programName} [ --dir [.] --file [BotName.json] --pretty --version <BotVersion> ] <BotName>\n\n`;
 
-	console.log(`Usage:  ${__filename} <BotName> <BotVersion>`);
-	console.log(`    for example:  ${__filename}  PressoBot "\\$LATEST"`)
+  help += "    -d, --dir      Output directory for file (implies --file w/default file name of <BotName>.json), default is current directory\n";
+  help += "    -f, --file     Output definition to file, if filename provided it overrides default of <BotName>.json\n";
+  help += "    -p, --pretty   Output definition in a readable format with sorted entries\n";
+  help += "    -v, --version  Output the version specified, or $LATEST by default\n\n";
+  help += `    for example: '${programName} -v PressoBot' will output the $LATEST version of PressoBot to PressoBot.json in the current directory\n\n`;
+
+  return help;
+}
+
+console.dir( argvs );
+if ( argvs.help || argvs._.length == 0 ) {
+	console.log( help() );
 	process.exit(-1);
 }
 
-let myBotName = process.argv[2];
-let myBotVersion = process.argv[3] || '$LATEST';
+let myBotName = argvs._[0];
+let myBotVersion = argvs.version;
 
 getBotDefinition(myBotName, myBotVersion, function(err, botDefinition) {
 
@@ -193,8 +211,18 @@ getBotDefinition(myBotName, myBotVersion, function(err, botDefinition) {
 		console.log( err )
 	else
 	{
-		// Output the bot definition to a file named after the bot name
-		// Output is formatted for easier readibility
-		console.log(stringify(botDefinition, {'space': '  '}));
+		let output = argvs[ 'pretty' ] ? stringify(botDefinition, {'space': '  '}) : JSON.stringify( botDefinition );
+
+		if ( argvs[ 'file' ] || argvs[ 'dir' ] )
+		{
+			let dir = argvs[ 'dir' ] || '.';
+			let file = argvs[ 'file' ] || ( myBotName + '.json' );
+			let fullName = dir + '/' + file;
+
+			fs.writeFile(fullName, output, function( err ) { if ( err ) console.log( "Error : " + err ); });
+		}
+		else
+			console.log( output );
 	}
+
 });

@@ -19,14 +19,11 @@
 	http://docs.aws.amazon.com/lex/latest/dg/access-control-managing-permissions.html#access-policy-examples-aws-managed
 
 	To install:
-	$ npm init
-	$ npm install aws-sdk  # if you don't have it installed globally
-	# copy this file as exportlexbot.js
+	# git clone ...
+	# npm install
 
 	To use:
-	$ node exportlexbot.js <BotName> <BotVersion>
-	# e.g., node exportlexbot.js PressoBot "\$LATEST"
-	# e.g., node exportlexbot.js PressoBot "\$LATEST" | jq '.'
+	$ node exportlexbot.js <BotName>
 */
 
 'use strict';

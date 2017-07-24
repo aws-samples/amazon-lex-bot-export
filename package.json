@@ -1,0 +1,24 @@
+{
+  "name": "amazon-lex-bot-export",
+  "version": "1.0.0",
+  "description": "This script can be used to export the definition for an Amazon Lex bot.  It relies on the AWS SDK and the [Amazon Lex Model Building Service API](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/LexModelBuildingService.html).",
+  "main": "exportlexbot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/awslabs/amazon-lex-bot-export.git"
+  },
+  "author": "Amazon.com, Inc.",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/awslabs/amazon-lex-bot-export/issues"
+  },
+  "homepage": "https://github.com/awslabs/amazon-lex-bot-export#readme",
+  "dependencies": {
+    "aws-sdk": "^2.88.0",
+    "json-stable-stringify": "^1.0.1",
+    "minimist": "^1.2.0"
+  }
+}

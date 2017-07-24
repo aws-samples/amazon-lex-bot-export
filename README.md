@@ -6,15 +6,14 @@ The user must have [IAM permissions](http://docs.aws.amazon.com/lex/latest/dg/ac
 ## To install
 ```bash
 $ npm init
-$ npm install aws-sdk  # if you don't have it installed globally
+$ npm install # if you don't have it installed globally
 # copy this file as exportlexbot.js
 ```
 
 ## To use
 ```bash
-$ node exportlexbot.js <BotName> <BotVersion>
+$ node exportlexbot.js <BotName>
 # examples:
-# node exportlexbot.js PressoBot "\$LATEST"
-# node exportlexbot.js PressoBot "\$LATEST" | jq '.'
-# node exportlexbot.js PressoBot "\$LATEST" | jq '.' > bot.json 
+# node exportlexbot.js PressoBot -v "\$LATEST" -p
+# node exportlexbot.js -h
 ```

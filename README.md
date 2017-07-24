@@ -5,9 +5,8 @@ The user must have [IAM permissions](http://docs.aws.amazon.com/lex/latest/dg/ac
 
 ## To install
 ```bash
-$ npm init
-$ npm install # if you don't have it installed globally
-# copy this file as exportlexbot.js
+# git clone ...
+# npm install
 ```
 
 ## To use
